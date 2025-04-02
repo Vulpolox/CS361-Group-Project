@@ -7,3 +7,5 @@ function recommendMitigation(threat) {
     };
     return mitigationStrategies[threat] || 'No specific mitigation available.';
 }
+
+module.exports = { recommendMitigation };
