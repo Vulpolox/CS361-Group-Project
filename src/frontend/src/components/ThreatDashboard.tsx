@@ -1,4 +1,6 @@
 import React from 'react';
+import Chart from 'chart.js/auto'
+
 // import './ThreatDashboard.css';
 
 // Define the Threat type
@@ -7,7 +9,6 @@ type Threat = {
     vulnerability: string;
     risk_score: number;
 };
-
 const ThreatDashboard: React.FC = () => {
     // Sample threat data
     const threats: Threat[] = [
@@ -15,7 +16,20 @@ const ThreatDashboard: React.FC = () => {
         { name: 'SQL Injection', vulnerability: 'Weak input validation', risk_score: 9 },
         { name: 'Brute Force', vulnerability: 'Weak passwords', risk_score: 7 },
     ];
-
+    
+    var ctx = document.getElementById('riskChart').getContext('2d');
+    var riskChart = new Chart(ctx, {
+        type: 'line',
+        data: {
+            labels: ['Week 1', 'Week 2', 'Week 3', 'Week 4'],
+            datasets: [{
+                label: 'Risk Score Trend',
+                data: [10, 25, 35, 50],
+                borderColor: 'red',
+                fill: false
+            }]
+        }
+    });
     return (
         <div className="ThreatDashboard">
             <header className="ThreatDashboard-header">
@@ -40,6 +54,9 @@ const ThreatDashboard: React.FC = () => {
                         ))}
                     </tbody>
                 </table>
+                <div>
+                    
+                </div>
                 <p>
                     Edit <code>src/ThreatDashboard.tsx</code> and save to reload.
                 </p>
