@@ -67,3 +67,7 @@ const threat = {
 };
 
 handleThreat(threat);
+
+/** Git Commit Message
+Implemented email and webhook alerts for threats with Risk Score > 20 in /src/alert_manager.js
+
