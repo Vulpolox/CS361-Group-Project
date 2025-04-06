@@ -1,5 +1,14 @@
-import React from 'react';
-import Chart from 'chart.js/auto'
+import React, { useEffect } from 'react';
+import {
+    Chart as ChartJS,
+    CategoryScale,
+    LinearScale,
+    PointElement,
+    LineElement,
+    Title,
+    Tooltip,
+    Legend,
+} from 'chart.js';
 
 // import './ThreatDashboard.css';
 
@@ -9,6 +18,7 @@ type Threat = {
     vulnerability: string;
     risk_score: number;
 };
+
 const ThreatDashboard: React.FC = () => {
     // Sample threat data
     const threats: Threat[] = [
@@ -16,20 +26,46 @@ const ThreatDashboard: React.FC = () => {
         { name: 'SQL Injection', vulnerability: 'Weak input validation', risk_score: 9 },
         { name: 'Brute Force', vulnerability: 'Weak passwords', risk_score: 7 },
     ];
-    
-    var ctx = document.getElementById('riskChart').getContext('2d');
-    var riskChart = new Chart(ctx, {
-        type: 'line',
-        data: {
-            labels: ['Week 1', 'Week 2', 'Week 3', 'Week 4'],
-            datasets: [{
-                label: 'Risk Score Trend',
-                data: [10, 25, 35, 50],
-                borderColor: 'red',
-                fill: false
-            }]
+
+    var ctx = (document.getElementById('riskChart') as HTMLCanvasElement).getContext('2d');
+
+    useEffect(() => {
+        if (ctx) {
+            var riskChart = new ChartJS(ctx, {
+                type: 'line',
+                data: {
+                    labels: ['Week 1', 'Week 2', 'Week 3', 'Week 4'],
+                    datasets: [{
+                        label: 'Risk Score Trend',
+                        data: [10, 25, 35, 50],
+                        borderColor: 'red',
+                        fill: false
+                    }]
+                }
+            });
+            const config = {
+                type: 'line',
+                data: riskChart,
+                options: {
+                    responsive: true,
+                    plugins: {
+                        legend: {
+                            position: 'top',
+                        },
+                        title: {
+                            display: true,
+                            text: 'Chart.js Line Chart'
+                        }
+                    }
+                },
+            }
+            // Cleanup chart on component unmount
+            return () => {
+                riskChart.destroy();
+            };
         }
-    });
+    }, []);
+    
     return (
         <div className="ThreatDashboard">
             <header className="ThreatDashboard-header">
@@ -55,7 +91,10 @@ const ThreatDashboard: React.FC = () => {
                     </tbody>
                 </table>
                 <div>
-                    
+                    <line>
+                        data={riskChart};
+                        options={config};
+                    </line>
                 </div>
                 <p>
                     Edit <code>src/ThreatDashboard.tsx</code> and save to reload.
