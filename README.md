@@ -6,6 +6,8 @@
 * Montana Nicholson
 * Samuel Yohannes
 
+
+### Weekly Updates:
 Week 1: 
 Role Assignment 
 GitHub Setup: Jack Keys
