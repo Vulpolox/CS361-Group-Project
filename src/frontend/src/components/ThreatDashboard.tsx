@@ -87,8 +87,8 @@ const ThreatDashboard: React.FC = () => {
                 </table>
                 <div>
                     <line>
-                        data={riskChart};
-                        options={config};
+                        {/*data={riskChart};
+                        options={config};*/}
                     </line>
                 </div>
                 <p>
