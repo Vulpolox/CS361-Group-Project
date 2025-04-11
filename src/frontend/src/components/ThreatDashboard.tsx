@@ -1,13 +1,8 @@
+/* eslint-disable react-hooks/exhaustive-deps */
+/* eslint-disable @typescript-eslint/no-unused-vars */
 import React, { useEffect } from 'react';
 import {
     Chart as ChartJS,
-    CategoryScale,
-    LinearScale,
-    PointElement,
-    LineElement,
-    Title,
-    Tooltip,
-    Legend,
 } from 'chart.js';
 
 // import './ThreatDashboard.css';
@@ -27,11 +22,11 @@ const ThreatDashboard: React.FC = () => {
         { name: 'Brute Force', vulnerability: 'Weak passwords', risk_score: 7 },
     ];
 
-    var ctx = (document.getElementById('riskChart') as HTMLCanvasElement).getContext('2d');
+    const ctx = (document.getElementById('riskChart') as HTMLCanvasElement).getContext('2d');
 
     useEffect(() => {
         if (ctx) {
-            var riskChart = new ChartJS(ctx, {
+            const riskChart = new ChartJS(ctx, {
                 type: 'line',
                 data: {
                     labels: ['Week 1', 'Week 2', 'Week 3', 'Week 4'],
