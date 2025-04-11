@@ -1,4 +1,10 @@
-import React from 'react';
+/* eslint-disable react-hooks/exhaustive-deps */
+/* eslint-disable @typescript-eslint/no-unused-vars */
+import React, { useEffect } from 'react';
+import {
+    Chart as ChartJS,
+} from 'chart.js';
+
 // import './ThreatDashboard.css';
 
 // Define the Threat type
@@ -16,6 +22,45 @@ const ThreatDashboard: React.FC = () => {
         { name: 'Brute Force', vulnerability: 'Weak passwords', risk_score: 7 },
     ];
 
+    const ctx = (document.getElementById('riskChart') as HTMLCanvasElement).getContext('2d');
+
+    useEffect(() => {
+        if (ctx) {
+            const riskChart = new ChartJS(ctx, {
+                type: 'line',
+                data: {
+                    labels: ['Week 1', 'Week 2', 'Week 3', 'Week 4'],
+                    datasets: [{
+                        label: 'Risk Score Trend',
+                        data: [10, 25, 35, 50],
+                        borderColor: 'red',
+                        fill: false
+                    }]
+                }
+            });
+            const config = {
+                type: 'line',
+                data: riskChart,
+                options: {
+                    responsive: true,
+                    plugins: {
+                        legend: {
+                            position: 'top',
+                        },
+                        title: {
+                            display: true,
+                            text: 'Chart.js Line Chart'
+                        }
+                    }
+                },
+            }
+            // Cleanup chart on component unmount
+            return () => {
+                riskChart.destroy();
+            };
+        }
+    }, []);
+    
     return (
         <div className="ThreatDashboard">
             <header className="ThreatDashboard-header">
@@ -40,6 +85,12 @@ const ThreatDashboard: React.FC = () => {
                         ))}
                     </tbody>
                 </table>
+                <div>
+                    <line>
+                        data={riskChart};
+                        options={config};
+                    </line>
+                </div>
                 <p>
                     Edit <code>src/ThreatDashboard.tsx</code> and save to reload.
                 </p>
