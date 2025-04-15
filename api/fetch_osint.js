@@ -2,8 +2,8 @@ const axios = require('axios');
 const { Client } = require('pg');
 
 // API Keys (Replace with actual keys or use environment variables)
-const SHODAN_API_KEY = process.env.SHODAN_API_KEY || 'your_shodan_api_key';
-const IP = '8.8.8.8';
+const SHODAN_API_KEY = process.env.SHODAN_API_KEY || 'HlvDD7cbdhneBv7WzGRZtZ1JSnCHQIP8'; //key from haley's shodan
+const IP = '8.8.8.8'; 
 
 // Database Connection Settings
 const DB_NAME = process.env.DB_NAME || 'threat_intel';
