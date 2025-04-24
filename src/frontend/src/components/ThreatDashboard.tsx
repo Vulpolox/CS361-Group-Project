@@ -1,13 +1,7 @@
-/* eslint-disable react-hooks/exhaustive-deps */
-/* eslint-disable @typescript-eslint/no-unused-vars */
-import React, { useEffect } from 'react';
-import {
-    Chart as ChartJS,
-} from 'chart.js';
+import React, { useEffect, useState } from 'react';
+import Chart from 'chart.js/auto';
+import axios from 'axios';
 
-// import './ThreatDashboard.css';
-
-// Define the Threat type
 type Threat = {
     name: string;
     vulnerability: string;
@@ -15,93 +9,112 @@ type Threat = {
 };
 
 const ThreatDashboard: React.FC = () => {
-    // Sample threat data
-    const threats: Threat[] = [
-        { name: 'DDoS', vulnerability: 'Unprotected endpoints', risk_score: 8 },
-        { name: 'SQL Injection', vulnerability: 'Weak input validation', risk_score: 9 },
-        { name: 'Brute Force', vulnerability: 'Weak passwords', risk_score: 7 },
-    ];
-
-    const ctx = (document.getElementById('riskChart') as HTMLCanvasElement).getContext('2d');
+    const [threats, setThreats] = useState<Threat[]>([]);
+    const [loading, setLoading] = useState<boolean>(true);
+    const [error, setError] = useState<string | null>(null);
 
     useEffect(() => {
-        if (ctx) {
-            const riskChart = new ChartJS(ctx, {
+        const fetchThreats = async () => {
+            try {
+                const response = await axios.get('http://localhost:5000/api/threats');
+                console.log('Fetched threats:', response.data);
+                setThreats(response.data);
+            } catch (error) {
+                console.error('Error fetching threat data:', error);
+                setError("Failed to load threat data.");
+            } finally {
+                setLoading(false);
+            }
+        };
+
+        fetchThreats();
+    }, []);
+
+    useEffect(() => {
+        const ctx = (document.getElementById('riskChart') as HTMLCanvasElement)?.getContext('2d');
+        if (ctx && threats.length > 0) {
+            const riskChart = new Chart(ctx, {
                 type: 'line',
                 data: {
-                    labels: ['Week 1', 'Week 2', 'Week 3', 'Week 4'],
-                    datasets: [{
-                        label: 'Risk Score Trend',
-                        data: [10, 25, 35, 50],
-                        borderColor: 'red',
-                        fill: false
-                    }]
-                }
-            });
-            const config = {
-                type: 'line',
-                data: riskChart,
+                    labels: threats.map((_, i) => `Threat ${i + 1}`),
+                    datasets: [
+                        {
+                            label: 'Risk Score Trend',
+                            data: threats.map((t) => t.risk_score),
+                            borderColor: 'red',
+                            backgroundColor: 'rgba(255,0,0,0.1)',
+                            fill: true,
+                            tension: 0.3
+                        },
+                    ],
+                },
                 options: {
                     responsive: true,
                     plugins: {
                         legend: {
-                            position: 'top',
-                        },
-                        title: {
                             display: true,
-                            text: 'Chart.js Line Chart'
-                        }
-                    }
+                        },
+                    },
+                    scales: {
+                        x: {
+                            title: {
+                                display: true,
+                                text: 'Threats',
+                            },
+                        },
+                        y: {
+                            title: {
+                                display: true,
+                                text: 'Risk Score',
+                            },
+                            min: 0,
+                            max: 100
+                        },
+                    },
                 },
-            }
-            // Cleanup chart on component unmount
+            });
+
             return () => {
                 riskChart.destroy();
             };
         }
-    }, []);
-    
+    }, [threats]);
+
     return (
-        <div className="ThreatDashboard">
+        <div className="ThreatDashboard" style={{ padding: "2rem" }}>
             <header className="ThreatDashboard-header">
-                <h1>Real-Time Threat Intelligence</h1>
-                <p>Live Threat Updates will be displayed here.</p>
+                <h1>🔐 Real-Time Threat Intelligence</h1>
                 <h2>Threat Intelligence Overview</h2>
-                <table>
-                    <thead>
-                        <tr>
-                            <th>Threat</th>
-                            <th>Vulnerability</th>
-                            <th>Risk Score</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        {threats.map((threat, index) => (
-                            <tr key={index}>
-                                <td>{threat.name}</td>
-                                <td>{threat.vulnerability}</td>
-                                <td>{threat.risk_score}</td>
-                            </tr>
-                        ))}
-                    </tbody>
-                </table>
-                <div>
-                    <line>
-                        data={riskChart};
-                        options={config};
-                    </line>
-                </div>
-                <p>
-                    Edit <code>src/ThreatDashboard.tsx</code> and save to reload.
-                </p>
-                <a
-                    className="ThreatDashboard-link"
-                    href="https://reactjs.org"
-                    target="_blank"
-                    rel="noopener noreferrer"
-                >
-                    Learn React
-                </a>
+
+                {loading && <p>Loading threat data...</p>}
+                {error && <p style={{ color: 'red' }}>{error}</p>}
+
+                {!loading && threats.length > 0 && (
+                    <>
+                        <table border={1} cellPadding={8} style={{ width: "100%", marginBottom: "2rem" }}>
+                            <thead>
+                                <tr>
+                                    <th>Threat</th>
+                                    <th>Vulnerability</th>
+                                    <th>Risk Score</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {threats.map((threat, index) => (
+                                    <tr key={index}>
+                                        <td>{threat.name}</td>
+                                        <td>{threat.vulnerability}</td>
+                                        <td>{threat.risk_score}</td>
+                                    </tr>
+                                ))}
+                            </tbody>
+                        </table>
+
+                        <div style={{ maxWidth: "800px", margin: "0 auto" }}>
+                            <canvas id="riskChart" />
+                        </div>
+                    </>
+                )}
             </header>
         </div>
     );
