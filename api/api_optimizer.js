@@ -1,95 +1,53 @@
 const redis = require("redis");
-const sqlite3 = require("sqlite3").verbose();
-require("dotenv").config({ path: './srv.env' });
+const { promisify } = require("util");
 
-// Redis client
-const client = redis.createClient({
-  url: process.env.REDIS_URL || "redis://localhost:6379",
-});
-client.connect();
+// Redis setup
+const client = redis.createClient();
+const getAsync = promisify(client.get).bind(client);
+const setexAsync = promisify(client.setex).bind(client);
 
-// SQLite client
-const dbPath = process.env.DB_PATH || './threat_intel.db';
-const db = new sqlite3.Database(dbPath, err => {
-  if (err) {
-    console.error("❌ SQLite connection error:", err.message);
-  } else {
-    console.log("✅ SQLite connected in api_optimizer");
-  }
-});
-
-// Simulated OSINT fetch
+/**
+ * Simulates fetching threat data from an external OSINT API.
+ * Replace with actual API call in production.
+ */
 async function fetchFromOSINT(ip) {
-  await new Promise(resolve => setTimeout(resolve, 1000)); // simulate delay
-  return {
-    ip,
-    threat_level: "high",
-    confidence: 92
-  };
-}
-
-// Store to SQLite
-function storeThreatData(ip, threat_level, confidence) {
-  const query = `
-    INSERT INTO threat_data (ip_address, ports, hostnames)
-    VALUES (?, ?, ?)
-  `;
-  const values = [ip, `confidence: ${confidence}`, `threat: ${threat_level}`];
-
-  db.run(query, values, function (err) {
-    if (err) {
-      console.error("❌ SQLite insert error:", err.message);
-    } else {
-      console.log(`✅ Data for ${ip} saved to SQLite.`);
-    }
-  });
-}
-
-// Get threat data, check Redis > SQLite > Fetch
-async function getThreatData(ip) {
-  // 1. Check Redis cache
-  const cached = await client.get(ip);
-  if (cached) {
-    console.log(`🟢 Cache hit for IP: ${ip}`);
-    return JSON.parse(cached);
-  }
-
-  // 2. Check SQLite
-  return new Promise((resolve, reject) => {
-    db.get("SELECT * FROM threat_data WHERE ip_address = ?", [ip], async (err, row) => {
-      if (err) {
-        console.error("❌ SQLite read error:", err.message);
-        return reject(err);
-      }
-
-      if (row) {
-        console.log(`🟡 SQLite hit for IP: ${ip}`);
-        const data = {
-          ip: row.ip_address,
-          threat_level: row.hostnames?.split(': ')[1] || "unknown",
-          confidence: parseInt(row.ports?.split(': ')[1]) || 0
-        };
-
-        // cache to Redis
-        await client.setEx(ip, 3600, JSON.stringify(data));
-        return resolve(data);
-      }
-
-      // 3. Fallback to external fetch
-      console.log(`🔴 No match found — fetching from OSINT...`);
-      const data = await fetchFromOSINT(ip);
-
-      // Save to both Redis and SQLite
-      await client.setEx(ip, 3600, JSON.stringify(data));
-      storeThreatData(data.ip, data.threat_level, data.confidence);
-
-      return resolve(data);
+    // Simulated delay
+    await new Promise(resolve => setTimeout(resolve, 1000));
+    return JSON.stringify({
+        ip,
+        threat_level: "high",
+        confidence: 92
     });
-  });
 }
 
-module.exports = {
-  getThreatData,
-  fetchFromOSINT,
-  storeThreatData
-};
+/**
+ * Gets threat data for the given IP address, using Redis caching.
+ * 
+ * @param {string} ip - IP address to look up
+ * @returns {Promise<string>} - Threat data in JSON format
+ */
+async function getThreatData(ip) {
+    const cached = await getAsync(ip);
+    if (cached) {
+        console.log(`Cache hit for IP: ${ip}`);
+        return cached;
+    } else {
+        console.log(`Cache miss for IP: ${ip}, fetching from API...`);
+        const data = await fetchFromOSINT(ip);
+        await setexAsync(ip, 3600, data); // Cache for 1 hour
+        return data;
+    }
+}
+
+// Example usage
+(async () => {
+    const ipAddress = "192.168.1.100";
+    const result = await getThreatData(ipAddress);
+    console.log("Threat Data:", result);
+    client.quit();
+})();
+
+
+/**
+bash : npm install redis
+ */
