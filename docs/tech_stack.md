@@ -1,9 +1,9 @@
 # Chosen Tech Stack
 ## FRONTEND
-* React
+* React + Typescript + Vite
 ## BACKEND
 ### Database
-* PostgreSQL
+* SQLite
 ### Other
 * Node.js
 * Express.js
