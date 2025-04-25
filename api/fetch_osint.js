@@ -1,22 +1,16 @@
 const axios = require('axios');
-const sqlite3 = require('sqlite3').verbose();
-require('dotenv').config();
+const { Client } = require('pg');
 
 // API Keys (Replace with actual keys or use environment variables)
 const SHODAN_API_KEY = process.env.SHODAN_API_KEY || 'your_shodan_api_key';
 const IP = '8.8.8.8';
 
-// SQLite Database File Path (Use an environment variable or default to a file)
-const DB_PATH = process.env.DB_PATH || './threat_intel.db';
-
-// Initialize SQLite database connection
-const db = new sqlite3.Database(DB_PATH, (err) => {
-    if (err) {
-        console.error('Error connecting to SQLite database:', err.message);
-    } else {
-        console.log('Successfully connected to the SQLite database');
-    }
-});
+// Database Connection Settings
+const DB_NAME = process.env.DB_NAME || 'threat_intel';
+const DB_USER = process.env.DB_USER || 'admin';
+const DB_PASSWORD = process.env.DB_PASSWORD || 'securepass';
+const DB_HOST = process.env.DB_HOST || 'localhost';
+const DB_PORT = process.env.DB_PORT || '5432';
 
 // Fetch threat data from Shodan API
 async function fetchShodanData(ip) {
@@ -30,24 +24,29 @@ async function fetchShodanData(ip) {
     }
 }
 
-// Store threat data in the SQLite database
+// Store threat data in the database
 async function storeThreatData(assetId, threatName, vulnerabilityDesc, likelihood, impact) {
-    const query = `
-        INSERT INTO tva_mapping (asset_id, threat_name, vulnerability_description, likelihood, impact)
-        VALUES (?, ?, ?, ?, ?)
-    `;
-
-    return new Promise((resolve, reject) => {
-        db.run(query, [assetId, threatName, vulnerabilityDesc, likelihood, impact], function (err) {
-            if (err) {
-                console.error('Error storing data:', err.message);
-                reject(err);
-            } else {
-                console.log('Threat data successfully stored.');
-                resolve();
-            }
-        });
+    const client = new Client({
+        user: DB_USER,
+        host: DB_HOST,
+        database: DB_NAME,
+        password: DB_PASSWORD,
+        port: DB_PORT,
     });
+
+    try {
+        await client.connect();
+        const query = `
+            INSERT INTO tva_mapping (asset_id, threat_name, vulnerability_description, likelihood, impact)
+            VALUES ($1, $2, $3, $4, $5)
+        `;
+        await client.query(query, [assetId, threatName, vulnerabilityDesc, likelihood, impact]);
+        console.log('Threat data successfully stored.');
+    } catch (error) {
+        console.error('Database error:', error.message);
+    } finally {
+        await client.end();
+    }
 }
 
 // Main flow to fetch and store data
