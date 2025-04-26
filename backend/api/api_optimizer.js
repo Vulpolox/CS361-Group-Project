@@ -2,8 +2,8 @@
 
 const axios = require("axios");
 const redis = require("redis");
-require("dotenv").config({ path: './srv.env' });
-const db = require('../db/db'); // ✅ Use shared SQLite connection
+require("dotenv").config({ path: '../srv.env' });
+const db = require('../db/db'); // Fixed path to reflect correct structure
 
 // Redis client setup
 const client = redis.createClient({

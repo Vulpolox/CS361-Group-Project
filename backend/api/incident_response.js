@@ -1,5 +1,5 @@
 const sqlite3 = require('sqlite3').verbose();
-require('dotenv').config();
+require('dotenv').config({ path: '../srv.env' });
 
 const db = require('../db/db'); // Adjust the path if needed
 

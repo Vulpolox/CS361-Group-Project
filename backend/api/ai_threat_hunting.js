@@ -1,12 +1,11 @@
-require('dotenv').config();
-console.log("OPENAI_API_KEY from .env:", process.env.OPENAI_API_KEY);
+const env = require('../config/env');
 const express = require("express");
 const router = express.Router();
 const OpenAI = require("openai");
 const sqlite3 = require("sqlite3").verbose();
 
 // Initialize OpenAI client
-const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
+const openai = new OpenAI({ apiKey: env.OPENAI_API_KEY });
 
 // Path to SQLite DB
 const db = require('../db/db'); // adjust relative path based on file location

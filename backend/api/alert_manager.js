@@ -1,7 +1,7 @@
 const express = require("express");
 const nodemailer = require("nodemailer");
 const axios = require("axios");
-require("dotenv").config();
+require("dotenv").config({ path: '../srv.env' });
 
 const router = express.Router();
 

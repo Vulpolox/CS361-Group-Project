@@ -1,7 +1,7 @@
 // db/db.js
 const path = require('path');
 const sqlite3 = require('sqlite3').verbose();
-require('dotenv').config({ path: './srv.env' });
+require('dotenv').config({ path: '../srv.env' });
 
 // Resolve full path to the database
 const dbPath = path.resolve(__dirname, 'threat_intel.db');

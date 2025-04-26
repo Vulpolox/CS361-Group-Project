@@ -1,6 +1,6 @@
 //LLM-Based Risk Scoring
 const axios = require('axios');
-require('dotenv').config();
+require('dotenv').config({ path: '../srv.env' });
 
 const OPENAI_API_KEY = process.env.OPENAI_API_KEY;
 const API_URL = 'https://api.openai.com/v1/chat/completions';
