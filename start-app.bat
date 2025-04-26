@@ -1,7 +1,7 @@
 @echo off
 
 REM start the backend
-start cmd /k "cd api && node server.js"
+start cmd /k "cd backend && npm start"
 
 REM start React + Vite + Typescript frontend
-start cmd /k "cd src/frontend/src/components && npm run dev"
+start cmd /k "cd frontend && npm run dev"
