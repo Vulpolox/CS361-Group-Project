@@ -1,27 +1,34 @@
-const { Configuration, OpenAIApi } = require("openai");
-require("dotenv").config();
+require('dotenv').config();
+console.log("OPENAI_API_KEY from .env:", process.env.OPENAI_API_KEY);
+const express = require("express");
+const router = express.Router();
+const OpenAI = require("openai");
+const sqlite3 = require("sqlite3").verbose();
+
+// Initialize OpenAI client
+const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
+
+// Path to SQLite DB
+const db = require('../db/db'); // adjust relative path based on file location
+
 
 /**
  * Predicts potential next steps based on a security threat description using GPT-4.
- * @param {string} threatDescription - The description of the detected threat.
+ * This route handles POST requests to /api/analyze-threat
  */
-async function predictThreatBehavior(threatDescription) {
-    if (!threatDescription || typeof threatDescription !== "string") {
-        console.error("⚠️ A valid threat description must be provided.");
-        return;
+router.post("/analyze-threat", async (req, res) => {
+    const { description } = req.body;
+
+    if (!description || typeof description !== "string") {
+        return res.status(400).json({ error: "Invalid threat description." });
     }
 
-    const configuration = new Configuration({
-        apiKey: process.env.OPENAI_API_KEY,
-    });
-
-    const openai = new OpenAIApi(configuration);
-
-    const prompt = `You are a cybersecurity expert. Analyze this security threat and predict the most likely next attack vectors or steps:\n\n"${threatDescription}"`;
+    const prompt = `You are a cybersecurity expert. Analyze this security threat and predict the most likely next attack vectors or steps:\n\n"${description}"`;
 
     try {
-        const response = await openai.createChatCompletion({
-            model: "gpt-4",
+        // Call OpenAI API to generate analysis
+        const completion = await openai.chat.completions.create({
+            model: "gpt-3.5-turbo", // Use GPT-3.5 for analysis
             messages: [
                 { role: "system", content: "You are an expert in cybersecurity threat analysis." },
                 { role: "user", content: prompt },
@@ -30,17 +37,26 @@ async function predictThreatBehavior(threatDescription) {
             max_tokens: 300,
         });
 
-        const result = response.data.choices[0].message.content.trim();
-        console.log("🧠 Predicted Next Steps:\n", result);
-        return result;
+        const result = completion.choices[0].message.content.trim();
+
+        // Insert threat description and analysis into SQLite
+        const query = `INSERT INTO threat_analysis (description, analysis) VALUES (?, ?)`;
+        const params = [description, result];
+
+        db.run(query, params, function (err) {
+            if (err) {
+                console.error("Error storing threat analysis in database:", err.message);
+                return res.status(500).json({ error: "Failed to store analysis." });
+            }
+
+            // Respond with the analysis result
+            res.json({ analysis: result });
+        });
     } catch (err) {
-        console.error("❌ Error during AI prediction:", err.response?.data || err.message);
+        console.error("❌ OpenAI error:", err.response?.data || err.message);
+        res.status(500).json({ error: "Failed to generate analysis." });
     }
-}
+});
 
-// Example usage
-predictThreatBehavior("SQL Injection detected on login page.");
-
-// Install the OpenAI package: npm install openai dotenv
-// set up .env file in the root of the project : OPENAI_API_KEY=your_actual_api_key_here
+module.exports = router;
 

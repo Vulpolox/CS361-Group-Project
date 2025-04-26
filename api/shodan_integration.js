@@ -1,18 +1,21 @@
 ﻿const express = require("express");
 const axios = require("axios");
-const { Pool } = require("pg");
+const sqlite3 = require("sqlite3").verbose();
 require("dotenv").config({ path: "./.env" });
 
 const router = express.Router();
 
-// PostgreSQL Connection
-const pool = new Pool({
-    user: process.env.DB_USER,
-    host: process.env.DB_HOST,
-    database: process.env.DB_NAME,
-    password: process.env.DB_PASS,
-    port: process.env.DB_PORT || 5432,
-});
+const db = require('../db/db'); // Adjust the path if needed
+
+// Initialize the database table if it doesn't exist
+db.run(`
+    CREATE TABLE IF NOT EXISTS threat_data (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        ip_address TEXT NOT NULL,
+        ports TEXT,
+        hostnames TEXT
+    );
+`);
 
 // Shodan API Route
 router.get("/shodan/:ip", async (req, res) => {
@@ -35,18 +38,28 @@ router.get("/shodan/:ip", async (req, res) => {
         const ports = data.ports ? data.ports.join(", ") : "None";
         const hostnames = data.hostnames ? data.hostnames.join(", ") : "None";
 
-        // Insert data into PostgreSQL
+        // Insert data into SQLite
         const query = `
             INSERT INTO threat_data (ip_address, ports, hostnames)
-            VALUES ($1, $2, $3) RETURNING *;
+            VALUES (?, ?, ?)
         `;
         const values = [ip_address, ports, hostnames];
 
-        const result = await pool.query(query, values);
+        db.run(query, values, function(err) {
+            if (err) {
+                console.error("❌ Error inserting data:", err.message);
+                return res.status(500).json({ error: "Failed to store Shodan data" });
+            }
 
-        res.json({
-            message: "✅ Shodan data stored successfully",
-            data: result.rows[0],
+            res.json({
+                message: "✅ Shodan data stored successfully",
+                data: {
+                    id: this.lastID,
+                    ip_address,
+                    ports,
+                    hostnames
+                },
+            });
         });
     } catch (error) {
         console.error("❌ Error fetching from Shodan:", error.message);
