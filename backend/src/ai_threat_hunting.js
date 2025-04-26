@@ -1,16 +1,18 @@
-require('dotenv').config();
+const path = require('path');
+require('dotenv').config({ path: path.resolve(__dirname, '../srv.env') });
 console.log("OPENAI_API_KEY from .env:", process.env.OPENAI_API_KEY);
 const express = require("express");
 const router = express.Router();
 const OpenAI = require("openai");
-const sqlite3 = require("sqlite3").verbose();
+
+// Import centralized environment variables
+const env = require('./config/env');
+
+// Import centralized database connection
+const db = require('./database/db');
 
 // Initialize OpenAI client
-const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
-
-// Path to SQLite DB
-const db = require('../db/db'); // adjust relative path based on file location
-
+const openai = new OpenAI({ apiKey: env.OPENAI_API_KEY });
 
 /**
  * Predicts potential next steps based on a security threat description using GPT-4.

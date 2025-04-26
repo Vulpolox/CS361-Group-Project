@@ -2,12 +2,17 @@
 
 const axios = require("axios");
 const redis = require("redis");
-require("dotenv").config({ path: './srv.env' });
-const db = require('../db/db'); // ✅ Use shared SQLite connection
+const path = require("path");
+
+// Import centralized environment variables
+const env = require('./config/env');
+
+// Import centralized database connection
+const db = require('./database/db');
 
 // Redis client setup
 const client = redis.createClient({
-  url: process.env.REDIS_URL || "redis://localhost:6379",
+  url: env.REDIS_URL || "redis://localhost:6379",
 });
 
 client.connect()
