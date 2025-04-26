@@ -1,10 +1,14 @@
-require('dotenv').config({ path: './srv.env' });
-console.log("OPENAI_API_KEY from .env:", process.env.OPENAI_API_KEY);
+// Import centralized environment variables
+const env = require('./config/env');
 
+// Import other dependencies
 const express = require('express');
 const cors = require('cors');
-const sqlite3 = require('sqlite3').verbose();
 
+// Import centralized database connection
+const db = require('./database/db');
+
+// Import route handlers
 const aiThreatHunting = require('./ai_threat_hunting');
 const { fetchOsintData } = require('./fetch_osint');
 const { prioritizeRisks } = require('./risk_prioritization');
@@ -16,7 +20,7 @@ const app = express();
 
 // CORS for React frontend
 app.use(cors({
-  origin: process.env.FRONTEND_URL || 'http://localhost:5173',
+  origin: env.FRONTEND_URL || 'http://localhost:5173',
   credentials: true,
 }));
 
@@ -37,21 +41,6 @@ app.use((req, res, next) => {
 app.use((req, res, next) => {
   console.log(`📥 ${req.method} ${req.url}`);
   next();
-});
-
-const path = require('path');
-
-// Absolute path resolution
-const dbPath = path.resolve(__dirname, '../db/threat_intel.db');
-
-console.log(`📁 Using absolute SQLite DB path: ${dbPath}`);
-
-const db = new sqlite3.Database(dbPath, sqlite3.OPEN_READWRITE | sqlite3.OPEN_CREATE, err => {
-  if (err) {
-    console.error("❌ SQLite connection error:", err.message);
-  } else {
-    console.log(`✅ Successfully connected to SQLite at ${dbPath}`);
-  }
 });
 
 // DB setup
@@ -219,7 +208,7 @@ app.use((req, res) => {
 });
 
 // Start server
-const PORT = process.env.PORT || 5050;
+const PORT = env.PORT || 5050;
 app.listen(PORT, () => {
   console.log(`🚀 Server listening at http://localhost:${PORT}`);
 });
