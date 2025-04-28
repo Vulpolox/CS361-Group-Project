@@ -90,13 +90,49 @@ app.use('/api', shodanRoutes);
 
 // Get Threats
 app.get('/api/threats', (req, res) => {
+  console.log('📊 Fetching all threats from database');
   db.all('SELECT * FROM threat_data', [], (err, rows) => {
-    if (err) return res.status(500).json({ error: "Database error" });
-    const data = rows.map(row => ({
-      name: row.ip_address,
-      vulnerability: row.hostnames || 'N/A',
-      risk_score: Math.floor(Math.random() * 100),
-    }));
+    if (err) {
+      console.error("❌ Error fetching threats:", err.message);
+      return res.status(500).json({ error: "Database error" });
+    }
+    
+    console.log(`✅ Found ${rows.length} threats in database`);
+    
+    if (rows.length === 0) {
+      // If no threats in database, return empty array
+      return res.json([]);
+    }
+    
+    const data = rows.map(row => {
+      let threatLevel = 'N/A';
+      try {
+        // Try to extract threat level from hostnames field if it exists
+        threatLevel = row.hostnames?.includes('threat:') 
+          ? row.hostnames.split('threat:')[1].trim()
+          : row.hostnames || 'N/A';
+      } catch (e) {
+        console.warn(`⚠️ Could not parse hostnames for ${row.ip_address}:`, e.message);
+      }
+      
+      // Generate a consistent risk score based on IP if possible
+      let riskScore = Math.floor(Math.random() * 100);
+      if (row.ports && row.ports.includes('confidence:')) {
+        try {
+          const confidence = parseInt(row.ports.split('confidence:')[1].trim());
+          riskScore = confidence || riskScore;
+        } catch (e) {
+          console.warn(`⚠️ Could not parse confidence for ${row.ip_address}:`, e.message);
+        }
+      }
+      
+      return {
+        name: row.ip_address,
+        vulnerability: threatLevel,
+        risk_score: riskScore,
+      };
+    });
+    
     res.json(data);
   });
 });

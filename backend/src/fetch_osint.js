@@ -27,6 +27,25 @@ async function fetchShodanData(ip) {
     }
 }
 
+// Store threat data in threat_data table
+function storeThreatDataInMainTable(ip, ports, hostnames) {
+    const query = `
+        INSERT OR REPLACE INTO threat_data (
+            ip_address,
+            ports,
+            hostnames
+        ) VALUES (?, ?, ?)
+    `;
+
+    db.run(query, [ip, ports, hostnames], function (err) {
+        if (err) {
+            console.error('❌ Error inserting data into threat_data:', err.message);
+        } else {
+            console.log(`✅ IP "${ip}" successfully stored in threat_data table.`);
+        }
+    });
+}
+
 // Store threat data into TVA mapping table
 function storeThreatData(assetId, threatName, vulnerabilityDesc, likelihood, impact) {
     const query = `
@@ -52,17 +71,49 @@ function storeThreatData(assetId, threatName, vulnerabilityDesc, likelihood, imp
 async function main() {
     const data = await fetchShodanData(IP);
 
-    if (data && data.ports && data.ports.length > 0) {
+    if (!data) {
+        console.error('❌ No data returned from Shodan');
+        return;
+    }
+
+    // Store in threat_data table
+    const ports = data.ports ? data.ports.join(', ') : 'None';
+    const hostnames = data.hostnames ? data.hostnames.join(', ') : 'None';
+    storeThreatDataInMainTable(IP, ports, hostnames);
+
+    // Store in tva_mapping table
+    if (data.ports && data.ports.length > 0) {
         storeThreatData(
             'A003',
             'Exposed Ports',
-            'Multiple open ports detected on system',
+            `Multiple open ports detected: ${ports}`,
             'High',
             'Moderate'
         );
-    } else {
-        console.warn('⚠️ No port data available from Shodan, skipping DB insertion.');
     }
+    
+    if (data.vulns && Object.keys(data.vulns).length > 0) {
+        const vulns = Object.keys(data.vulns).join(', ');
+        storeThreatData(
+            'A004',
+            'Known Vulnerabilities',
+            `CVEs detected: ${vulns}`,
+            'High',
+            'High'
+        );
+    }
+
+    if (data.os) {
+        storeThreatData(
+            'A005',
+            'Operating System Fingerprint',
+            `OS detected: ${data.os}`,
+            'Medium',
+            'Low'
+        );
+    }
+
+    console.log('✅ Shodan data processing complete');
 }
 
 main();
