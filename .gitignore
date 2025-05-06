@@ -141,3 +141,6 @@ dist
 # Project Specific Ignores
 frontend/node_modules/
 backend/node_modules/
+
+# database
+backend/threat_intel.db/
