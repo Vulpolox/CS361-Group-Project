@@ -185,3 +185,17 @@ final_project_report.md - Haley Nilsen
 final_presentation.pptx - Haley Nilsen
 system_walkthrough.md - Haley Nilsen
 ```
+
+
+Summary:
+The goal of our project was to design and implement a comprehensive, real-time cybersecurity threat detection and mitigation platform, guided by the NIST framework and OSINT research. Over ten weeks, our team collaboratively built and refined a secure web application that integrates real-time threat intelligence, automated risk scoring, incident response planning, and AI-powered threat hunting. Each team member played a vital role:
+
+Samuel Yohannes led OSINT integration, risk analysis, real-time alerting, and AI threat detection.
+
+Toan Nguyen handled database design, asset tracking, and TVA mapping.
+
+Montana Nicholson developed and maintained the Threat Dashboard UI and system documentation.
+
+Haley Nilsen conducted API research, performance testing, and authored the final report and presentation.
+
+Jack Keys managed project planning, team structure, tech stack selection, and final system implementation.
